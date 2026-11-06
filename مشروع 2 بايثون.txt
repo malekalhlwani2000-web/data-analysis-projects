@@ -1,0 +1,91 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt 
+
+
+df=pd.read_excel('C:/Users/ASUS/Desktop/مشاريعي في data analysis/Online Retail.xlsx')
+
+#print(df)
+
+
+df=df.drop(['InvoiceNo','StockCode'],axis=1)
+
+print(df)
+
+ 
+df.info()
+
+print(df.isnull().sum())
+
+
+from sklearn.impute import SimpleImputer
+
+imputer=SimpleImputer(strategy='most_frequent')
+df[['Description']]=imputer.fit_transform(df[['Description']])
+
+df['CustomerID']=pd.to_numeric(df['CustomerID'],errors='coerce')
+
+imputer=SimpleImputer(strategy='most_frequent')
+df[['CustomerID']]=imputer.fit_transform(df[['CustomerID']])
+
+
+
+df['UnitPrice']=pd.to_numeric(df['UnitPrice'],errors='coerce')
+
+imputer=SimpleImputer(strategy='mean')
+df[['UnitPrice']]=imputer.fit_transform(df[['UnitPrice']])
+df=df[df['UnitPrice']>0]
+
+print(df.isnull().sum())
+
+df['InvoiceDate']=pd.to_datetime(df['InvoiceDate'],errors='coerce')
+
+
+
+customer_last_purchase = df[df['Quantity'] > 0].groupby('CustomerID')['InvoiceDate'].max()
+
+
+reference_date = df['InvoiceDate'].max()
+
+recency = (reference_date - customer_last_purchase).dt.days
+
+inactive_customers = recency[recency > 90].sort_values(ascending=False)
+
+print(inactive_customers)
+
+df['month']=df['InvoiceDate'].dt.to_period('M')
+df['YEAR']=df['InvoiceDate'].dt.to_period('Y')
+
+df['total']=df['UnitPrice']*df['Quantity']
+
+top_sales=df.groupby('Description')['total'].sum().sort_index(ascending=False)
+top_monthly=df.groupby('month')['total'].sum().sort_index(ascending=False) 
+top_CustomerID=df.groupby('CustomerID')['total'].sum().sort_index(ascending=False) 
+top_Country=df.groupby('Country')['total'].sum().sort_index(ascending=False)
+top_year=df.groupby('YEAR')['total'].sum().sort_index(ascending=False)
+
+
+df.to_excel('clean big data.xlsx', index=False)
+
+top_sales.to_frame(name='total').reset_index().to_excel('top_sales.xlsx', index=False)
+
+top_monthly.to_frame(name='total').reset_index().to_excel('top_monthly.xlsx', index=False)
+
+top_CustomerID.to_frame(name='total').reset_index().to_excel('top_CustomerID.xlsx', index=False)
+
+top_Country.to_frame(name='total').reset_index().to_excel('top_Country.xlsx', index=False)
+
+inactive_customers.to_frame(name='days_since_last_purchase').reset_index().to_excel('inactive_customers.xlsx', index=False)
+
+top_year.to_frame(name='total').reset_index().to_excel('top_year.xlsx', index=False)
+
+
+#import os
+
+#-os.startfile('clean big data.xlsx')
+#os.startfile('top_sales.xlsx')
+#os.startfile('top_monthly.xlsx')
+#os.startfile('top_CustomerID.xlsx')
+#os.startfile('top_Country.xlsx')
+#os.startfile('inactive_customers.xlsx')
+#os.startfile('top_year.xlsx')
