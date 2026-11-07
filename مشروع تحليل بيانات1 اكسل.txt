@@ -1,0 +1,71 @@
+import pandas as pd
+import numpy as np
+
+df=pd.read_excel('C:/Users/ASUS/Desktop/مشاريعي في data analysis/Book2.xlsx')
+print(df)
+
+df=df.drop(['ID','Order_ID'],axis=1)
+print(df)
+
+df.info()
+print(df.isnull().sum())
+
+from sklearn.impute import SimpleImputer
+
+imputer=SimpleImputer(strategy='most_frequent')
+df[[' Category']]=imputer.fit_transform(df[[' Category']])
+
+print(df.isnull().sum())
+
+df['Quantity']=pd.to_numeric(df['Quantity'],errors='coerce')
+imputer=SimpleImputer(strategy='mean')
+df[['Quantity']]=imputer.fit_transform(df[['Quantity']])
+
+print(df.isnull().sum())
+
+df['Price']=pd.to_numeric(df['Price'],errors='coerce')
+df=df[df['Price']>0]
+
+imputer=SimpleImputer(strategy='mean')
+df[['Price']]=imputer.fit_transform(df[['Price']])
+
+
+print(df.isnull().sum())
+
+df=df[df['Total']>0]
+
+imputer=SimpleImputer(strategy='mean')
+df[['Total']]=imputer.fit_transform(df[['Total']])
+
+print(df.isnull().sum())
+
+df['Order_Date']=pd.to_datetime(df['Order_Date'],errors='coerce')
+
+df['Order_Date'] = df['Order_Date'].fillna(
+    pd.Timestamp('2025-05-05')
+)
+
+df['month']=df['Order_Date'].dt.to_period('M')
+
+sales_by_monthly=df.groupby(df['month'])['Total'].sum().sort_index()
+print(sales_by_monthly)
+
+sales_by_Product=df.groupby(df['Product'])['Total'].sum().sort_index(ascending=False)
+
+print(sales_by_Product)
+
+
+sales_by_Payment_Method=df.groupby(df['Payment_Method'])['Total'].sum().sort_index(ascending=False)
+print(sales_by_Payment_Method)
+
+sales_by_monthly.to_frame('Total').reset_index().to_excel('sales_by_monthly.xlsx',index=False)
+
+sales_by_Product.to_frame('Total').reset_index().to_excel('sales_by_Product.xlsx',index=False)
+
+sales_by_Payment_Method.to_frame('Total').reset_index().to_excel('sales_by_Payment_Method.xlsx',index=False)
+df.to_excel('clean data2.xlsx',index=False)
+import os
+os.startfile('sales_by_monthly.xlsx')
+os.startfile('sales_by_Product.xlsx')
+os.startfile('sales_by_Payment_Method.xlsx')
+os.startfile('clean data2.xlsx')
